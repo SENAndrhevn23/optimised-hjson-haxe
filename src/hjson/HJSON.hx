@@ -1,49 +1,30 @@
 package hjson;
 
+import hjson.core.HjsonOptions;
+
+#if sys
 import sys.io.File;
+#end
 
 class HJSON {
-    // Parsing Functions
-
-    /**
-     * Parse a HJSON string into a Dynamic object (Map, Array, primitives)
-     * @param text The HJSON string
-     * @param allowCommas Optional, allow commas between elements
-     */
-    public static function parse(text:String, ?allowCommas:Bool = false):Dynamic {
-        return HJSONParser.parse(text, allowCommas);
+    
+    public static function parse(text:String, ?options:ParseOptions):Dynamic {
+        return HJSONParser.parse(text, options);
     }
-    // File I/O Functions
 
-    /**
-     * Parse a HJSON file into a Dynamic object
-     * @param path Path to the HJSON file
-     * @param allowCommas Optional, allow commas
-     */
-    public static function parseFile(path:String, ?allowCommas:Bool = false):Dynamic {
+    #if sys
+    public static function parseFile(path:String, ?options:ParseOptions):Dynamic {
         var content = File.getContent(path);
-        return parse(content, allowCommas);
+        return parse(content, options);
     }
-    /**
-     * Save a Dynamic object as a HJSON file
-     * @param value Object to save
-     * @param path File path to save to
-     * @param pretty Optional: add indentation/newlines
-     * @param useCommas Optional, include commas between elements
-     */
-    public static function saveToFile(value:Dynamic, path:String, ?pretty:Bool = true, ?useCommas:Bool = false):Void {
-        var content = stringify(value, pretty, useCommas);
+
+    public static function saveToFile(value:Dynamic, path:String, ?options:WriteOptions):Void {
+        var content = stringify(value, options);
         File.saveContent(path, content);
     }
-    // Writing Functions
+    #end
 
-    /**
-     * Convert a Dynamic object into a HJSON string
-     * @param value Object to convert (Map, Array, primitives)
-     * @param pretty Optional: add indentation/newlines
-     * @param useCommas Optional: include commas between elements
-     */
-    public static function stringify(value:Dynamic, ?pretty:Bool = true, ?useCommas:Bool = false):String {
-        return HJSONWriter.stringify(value, pretty, useCommas);
+    public static function stringify(value:Dynamic, ?options:WriteOptions):String {
+        return HJSONWriter.stringify(value, options);
     }
 }
