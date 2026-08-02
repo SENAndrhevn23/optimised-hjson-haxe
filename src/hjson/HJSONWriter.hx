@@ -2,71 +2,73 @@ package hjson;
 
 import EReg;
 import Std;
-import HStringTools;
-import Type;
 import Reflect;
+import hjson.core.HJSONOptions.WriteOptions;
+
+using StringTools;
 
 class HJSONWriter {
 
-    /**
-     * Convert a Dynamic object to a HJSON string
-     * @param v Object to stringify
-     * @param pretty Optional: add indentation and newlines
-     * @param useCommas Optional: include commas
-     */
-    public static function stringify(v:Dynamic, ?pretty:Bool = true, ?useCommas:Bool = false):String {
-        return writeValue(v, 0, pretty, useCommas);
+    public static function stringify(v:Dynamic, ?options:WriteOptions):String {
+        var opts:WriteOptions = options != null ? options : {};
+        if (opts.pretty == null) opts.pretty = true;
+        if (opts.useCommas == null) opts.useCommas = false;
+        if (opts.indentSize == null) opts.indentSize = 2;
+        if (opts.quoteKeys == null) opts.quoteKeys = false;
+
+        return writeValue(v, 0, opts);
     }
 
-    static function writeValue(v:Dynamic, indent:Int, pretty:Bool, useCommas:Bool):String {
-        switch (v) {
-            case null: return "null";
-            case _: 
-                if (Std.isOfType(v, String)) return escapeString(v);
-                else if (Std.isOfType(v, Int) || Std.isOfType(v, Float)) return Std.string(v);
-                else if (Std.isOfType(v, Bool)) return if (v) "true" else "false";
-                else if (Std.isOfType(v, Array)) return writeArray(cast v, indent, pretty, useCommas);
-                else return writeObject(v, indent, pretty, useCommas);
-        }
+    static function writeValue(v:Dynamic, indent:Int, opts:WriteOptions):String {
+        if (v == null) return "null";
+
+        if (Std.isOfType(v, String)) return escapeString(cast v);
+        if (Std.isOfType(v, Int) || Std.isOfType(v, Float)) return Std.string(v);
+        if (Std.isOfType(v, Bool)) return v ? "true" : "false";
+        if (Std.isOfType(v, Array)) return writeArray(cast v, indent, opts);
+
+        return writeObject(v, indent, opts);
     }
 
-    static function writeObject(o:Dynamic, indent:Int, pretty:Bool, useCommas:Bool):String {
+    static function writeObject(o:Dynamic, indent:Int, opts:WriteOptions):String {
         var fields:Array<String> = Reflect.fields(o);
         var result = "{";
 
-        if (pretty && fields.length > 0) result += "\n";
+        if (opts.pretty && fields.length > 0) result += "\n";
 
         for (i in 0...fields.length) {
             var key = fields[i];
             var value = Reflect.field(o, key);
 
-            if (pretty) result += HStringTools.repeat("  ", indent + 1);
-            result += escapeKey(key) + ": " + writeValue(value, indent + 1, pretty, useCommas);
+            if (opts.pretty) result += StringTools.lpad("", " ", (indent + 1) * opts.indentSize);
+            
+            var formattedKey = opts.quoteKeys ? escapeString(key) : escapeKey(key);
+            result += formattedKey + ": " + writeValue(value, indent + 1, opts);
 
-            if (i < fields.length - 1 && useCommas) result += ",";
-            if (pretty) result += "\n";
+            if (i < fields.length - 1 && opts.useCommas) result += ",";
+            if (opts.pretty) result += "\n";
         }
 
-        if (pretty && fields.length > 0) result += HStringTools.repeat("  ", indent);
+        if (opts.pretty && fields.length > 0) result += StringTools.lpad("", " ", indent * opts.indentSize);
         result += "}";
         return result;
     }
 
-    static function writeArray(a:Array<Dynamic>, indent:Int, pretty:Bool, useCommas:Bool):String {
+    static function writeArray(a:Array<Dynamic>, indent:Int, opts:WriteOptions):String {
         var result = "[";
 
-        if (pretty && a.length > 0) result += "\n";
+        if (opts.pretty && a.length > 0) result += "\n";
 
         for (i in 0...a.length) {
             var value = a[i];
-            if (pretty) result += HStringTools.repeat("  ", indent + 1);
-            result += writeValue(value, indent + 1, pretty, useCommas);
+            if (opts.pretty) result += StringTools.lpad("", " ", (indent + 1) * opts.indentSize);
+            result += writeValue(value, indent + 1, opts);
 
-            if (i < a.length - 1 && useCommas) result += ",";
-            if (pretty) result += "\n";
+            if (i < a.length - 1 && opts.useCommas) result += ",";
+            if (opts.pretty) result += "\n";
         }
 
-        if (pretty && a.length > 0) result += HStringTools.repeat("  ", indent);
+        if (opts.pretty && a.length > 0) result += StringTools.lpad("", " ", indent * opts.indentSize);
         result += "]";
         return result;
     }
@@ -77,8 +79,7 @@ class HJSONWriter {
     }
 
     static function escapeKey(s:String):String {
-        // If the key contains spaces or special characters, quote it
-        var needsQuote = !Std.isOfType(s, String) || HStringTools.contains(s, " ") || HStringTools.contains(s, "\"") || HStringTools.contains(s, "\n");
+        var needsQuote = s.indexOf(" ") != -1 || s.indexOf("\"") != -1 || s.indexOf("\n") != -1;
         if (needsQuote) return escapeString(s);
         return s;
     }
