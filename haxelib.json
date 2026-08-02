@@ -4,9 +4,9 @@
   "license": "MIT",
   "tags": ["hjson", "parser", "writer", "file"],
   "description": "An Haxe library for reading and parsing HJSON files.",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "classPath": "src/",
-  "releasenote": "Fixed HJSONWriter errors and remade folder structure.",
+  "releasenote": "Adding soon",
   "contributors": ["Anthony"],
   "dependencies": {}
 }
