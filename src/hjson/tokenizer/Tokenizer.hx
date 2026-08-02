@@ -1,6 +1,6 @@
 package hjson.tokenizer;
 
-import HStringTools;
+using StringTools;
 
 class Tokenizer {
     public var text:String;
@@ -13,7 +13,7 @@ class Tokenizer {
     }
 
     public function nextToken():Token {
-        skipWhitespace();
+        skipWhitespaceAndComments();
 
         if (pos >= length) return new Token(TokenType.EOF, "");
 
@@ -35,20 +35,61 @@ class Tokenizer {
         }
     }
 
-    private function skipWhitespace():Void {
-        while (pos < length && isWhitespace(text.charAt(pos))) pos++;
+    private function skipWhitespaceAndComments():Void {
+        while (pos < length) {
+            var c = text.charAt(pos);
+            if (c == " " || c == "\t" || c == "\n" || c == "\r") {
+                pos++;
+            } else if (c == "#") { 
+                // Comentário de linha tipo Hash (#)
+                while (pos < length && text.charAt(pos) != "\n") pos++;
+            } else if (c == "/" && pos + 1 < length) {
+                var next = text.charAt(pos + 1);
+                if (next == "/") { 
+                    // Comentário de linha (//)
+                    while (pos < length && text.charAt(pos) != "\n") pos++;
+                } else if (next == "*") { 
+                    // Comentário de bloco (/* ... */)
+                    pos += 2;
+                    while (pos + 1 < length && !(text.charAt(pos) == "*" && text.charAt(pos + 1) == "/")) pos++;
+                    pos += 2;
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
     }
 
     private function readString():Token {
-        pos++;
-        var start = pos;
-        while (pos < length && text.charAt(pos) != '"') {
-            if (text.charAt(pos) == "\\") pos++;
+        pos++; // Pula aspa inicial
+        var buf = new StringBuf();
+        
+        while (pos < length) {
+            var c = text.charAt(pos);
+            if (c == '"') {
+                pos++; // Pula aspa final
+                break;
+            }
+            if (c == "\\") {
+                pos++;
+                if (pos >= length) break;
+                c = text.charAt(pos);
+                switch (c) {
+                    case 'n': buf.add("\n");
+                    case 'r': buf.add("\r");
+                    case 't': buf.add("\t");
+                    case '"': buf.add('"');
+                    case '\\': buf.add('\\');
+                    default: buf.add(c);
+                }
+            } else {
+                buf.add(c);
+            }
             pos++;
         }
-        var value = text.substring(start, pos);
-        pos++;
-        return new Token(TokenType.STRING, value);
+        return new Token(TokenType.STRING, buf.toString());
     }
 
     private function readNumber():Token {
@@ -80,7 +121,7 @@ class Tokenizer {
     private function readIdentifier():Token {
         var start = pos;
         var stopChars = "{}[]:,";
-        while (pos < length && !isWhitespace(text.charAt(pos)) && HStringTools.indexOf(stopChars, text.charAt(pos)) == -1) pos++;
+        while (pos < length && !isWhitespace(text.charAt(pos)) && stopChars.indexOf(text.charAt(pos)) == -1) pos++;
         return new Token(TokenType.IDENTIFIER, text.substring(start, pos));
     }
 
