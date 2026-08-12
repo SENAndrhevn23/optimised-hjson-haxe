@@ -12,7 +12,6 @@ A native Haxe library for reading, parsing, and writing HJSON (Human JSON) files
 - **Comment Support**: Automatically skips line (`//`, `#`) and block (`/* */`) comments.
 - **Flexible Options**: Custom indentation sizes, optional quote formatting, and comma toggles.
 - **Compile-Time Macros**: Parse and embed HJSON files directly at compile time via `HJSONMacro`.
-- **Cross-Platform**: Works across all Haxe targets, including Sys targets (C++, HashLink, Neko, Node.js) and Web/JS targets.
 
 ## Installation
 
