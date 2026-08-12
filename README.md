@@ -1,4 +1,4 @@
-# hjson4haxe
+###### hjson4haxe
 ![logo](https://github.com/anthonydudeh/hjson-haxe/blob/main/hlogo.png)
 
 A native Haxe library for reading, parsing, and writing HJSON (Human JSON) files with comment support and cross-platform flexibility.
@@ -11,8 +11,8 @@ A native Haxe library for reading, parsing, and writing HJSON (Human JSON) files
 - **HJSON Parsing & Stringify**: Parse HJSON strings into native Haxe Anonymous Objects `{}`.
 - **Comment Support**: Automatically skips line (`//`, `#`) and block (`/* */`) comments.
 - **Flexible Options**: Custom indentation sizes, optional quote formatting, and comma toggles.
-- **Compile-Time Macros**: Parse and validate HJSON files directly at compile time via `HJSONMacro`.
-- **Cross-Platform**: Works across all Haxe targets, including Sys targets (C++, HashLink, Neko) and Web/JS targets.
+- **Compile-Time Macros**: Parse and embed HJSON files directly at compile time via `HJSONMacro`.
+- **Cross-Platform**: Works across all Haxe targets, including Sys targets (C++, HashLink, Neko, Node.js) and Web/JS targets.
 
 ## Installation
 
@@ -21,14 +21,15 @@ Via Haxelib:
 haxelib install hjson4haxe
 ```
 
-Or directly from GitHub (latest updates):
+Or directly from GitHub
 ```bash
 haxelib git hjson4haxe https://github.com/anthonydudeh/hjson-haxe
 ```
 
 ## Usage
 
-**1. Basic Parsing & Stringify**
+1. `Basic Parsing & Stringify`
+
 ```haxe
 import hjson.HJSON;
 
@@ -49,43 +50,47 @@ class Main {
         trace(data.name);
         trace(data.skills[0]);
 
-        // Stringify back to HJSON
+        // Stringify back to HJSON with options
         var output = HJSON.stringify(data, { pretty: true, indentSize: 2 });
         trace(output);
     }
 }
 ```
 
-**2. Reading and Saving Files (Sys targets)**
-```Haxe
+2. `Reading and Saving Files (Sys targets)`
+
+```haxe
 import hjson.HJSON;
 
 class FileExample {
     static function run() {
         // Parse directly from a .hjson file
-        var config = HJSON.parseFile("haxelib.hjson");
+        var config = HJSON.parseFile("config.hjson");
         
         // Modify and save back to file
         config.version = "1.0.4";
-        HJSON.saveToFile(config, "config.hjson", { pretty: true, quoteKeys: false });
+        HJSON.saveToFile(config, "config.hjson");
     }
 }
 ```
 
-**3. Compile-Time Macro Parsing**
-*Load and validate HJSON files at compile time without any runtime I/O overhead:*
+3. `Compile-Time Macro Parsing`
+
+`Load and embed HJSON files into your binary at compile-time without any runtime I/O overhead`:
+
 ```haxe
 import hjson.macro.HJSONMacro;
 
 class MacroExample {
     static function main() {
-        // File is embedded and converted to Haxe objects at compile time
-        var buildConfig = HJSONMacro.parseFile("build.hjson");
-        trace(buildConfig.title);
+        // File is embedded and converted to Haxe expressions at compile-time
+        var buildConfig = HJSONMacro.parseFile("config_test.hjson");
+        trace(buildConfig.name);
     }
 }
 ```
----
 
-Read [CHANGELOG.md](https://github.com/anthonydudeh/hjson-haxe/blob/main/CHANGELOG.md)
-for the detailed version fixes and changes!
+> `Note: Since HJSONMacro.parseFile runs during compilation, the target file must exist on disk before running the Haxe build command.`
+
+Read [CHANGELOG.md](https://github.com/anthonydudeh/hjson-haxe/edit/main/CHANGELOG.md) for detailed version updates and changes!
+
