@@ -1,8 +1,0 @@
-{
-  name: "Haxe Lib"
-  version: "1.0.4"
-  features: [
-    "macros"
-    "comments"
-  ]
-}
