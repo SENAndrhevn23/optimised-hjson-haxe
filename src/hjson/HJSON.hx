@@ -1,6 +1,6 @@
 package hjson;
 
-import hjson.core.HjsonOptions;
+import hjson.core.HJSONOptions;
 
 #if sys
 import sys.io.File;
