@@ -4,8 +4,9 @@ package hjson.macro;
 import haxe.macro.Expr;
 import haxe.macro.Context;
 import sys.io.File;
+#end
 
-class HjsonMacro {
+class HJSONMacro {
     /**
      * Reads and parses an HJSON file at compile time.
      * E.g. var config = HJSONMacro.parseFile("config.hjson");
@@ -16,10 +17,8 @@ class HjsonMacro {
             var parsedData = hjson.HJSONParser.parse(content);
             return Context.makeExpr(parsedData, Context.currentPos());
         } catch (e:Dynamic) {
-            Context.error('Erro ao compilar arquivo HJSON ($path): $e', Context.currentPos());
+            Context.error('Error while compiling HJSON: ' + e, Context.currentPos());
             return macro null;
         }
     }
 }
-#end
-  
