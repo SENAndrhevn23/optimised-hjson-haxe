@@ -13,7 +13,7 @@ Versions under 1.0.3 should not be used.
 - **Compile-Time Macros**: Added `hjson.macro.HJSONMacro.parseFile()` for embedding HJSON assets directly during compilation.
 - **Flexible Options**: Introduced `ParseOptions` and `WriteOptions` (`indentSize`, `quoteKeys`, `useCommas`, `pretty`).
 - **Refactored Core**: Removed external `HStringTools` in favor of native Haxe `StringTools` and `StringBuf`.
-- **New Directory Structure**: Restructured package directory under `hjson.*` (`hjson.core`, `hjson.macro`, `hjson.tokenizer`).
+- **New Directory Structure**: Restructured package directory under `hjson.*`
 
 
 ## [1.0.3] – 2025-09-15
