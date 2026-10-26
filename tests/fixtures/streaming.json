@@ -1,0 +1,11 @@
+{
+  "engine": "H-Slice+ADR",
+  "song": {
+    "name": "Tiny test",
+    "notes": [
+      { "mustHitSection": true, "sectionNotes": [[0, 0, 0], [250, 1, 0]] },
+      { "mustHitSection": false, "sectionNotes": [[500, 4, 125]], "bpm": 150 }
+    ],
+    "events": []
+  }
+}
