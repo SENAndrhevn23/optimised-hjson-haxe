@@ -20,7 +20,7 @@ import sys.io.File;
  */
 class StreamingJSON
 {
-    public static inline var DEFAULT_BUFFER_SIZE:Int = 256 * 1024;
+    public static inline var DEFAULT_BUFFER_SIZE:Int = 4 * 1024 * 1024;
     static inline var MAX_DEPTH:Int = 1024;
 
     var input:Input;
@@ -334,23 +334,113 @@ class StreamingJSON
         return cast haxe.Json.parse(raw.getString(0, raw.length));
     }
 
+    /**
+     * Parse primitive values without allocating a temporary String for every
+     * numeric token. Large FNF charts are dominated by small numeric note
+     * fields (time, lane and sustain length), so this is the hot path for the
+     * streaming chart loader.
+     */
     function parsePrimitive():Dynamic
     {
-        var token = new StringBuf();
-        while (true)
+        var c:Int = peekByte();
+        switch (c)
         {
-            var c:Int = peekByte();
-            if (c < 0 || c == 44 || c == 93 || c == 125 || isWhitespace(c)) break;
-            token.addChar(readByte());
+            case 116: readLiteral("true"); return true;  // t
+            case 102: readLiteral("false"); return false; // f
+            case 110: readLiteral("null"); return null;   // n
+            default: return parseNumberFast();
         }
-        var value:String = token.toString();
-        switch (value)
+    }
+
+    inline function readLiteral(expected:String):Void
+    {
+        for (i in 0...expected.length)
         {
-            case "true": return true;
-            case "false": return false;
-            case "null": return null;
+            var actual:Int = readByte();
+            if (actual != expected.charCodeAt(i))
+                throw 'Invalid JSON literal; expected "$expected"';
         }
-        return parseNumberToken(value);
+    }
+
+    /** Strict JSON number parsing with no per-number StringBuf/String allocation. */
+    function parseNumberFast():Dynamic
+    {
+        var negative:Bool = false;
+        if (peekByte() == 45) // -
+        {
+            readByte();
+            negative = true;
+        }
+
+        var integerPart:Float = 0.0;
+        var first:Int = peekByte();
+        if (first == 48) // zero cannot be followed by another integer digit
+        {
+            readByte();
+            if (isDigitChar(peekByte())) throw "Leading zero in JSON number";
+        }
+        else if (isNonZeroDigit(first))
+        {
+            while (isDigitChar(peekByte()))
+            {
+                integerPart = integerPart * 10.0 + (readByte() - 48);
+            }
+        }
+        else
+            throw "Expected JSON number";
+
+        // The zero branch consumed its first digit above; the non-zero branch
+        // consumed every integer digit in its loop.
+        if (first == 48) integerPart = 0.0;
+        var value:Float = integerPart;
+        var floating:Bool = false;
+
+        if (peekByte() == 46) // .
+        {
+            floating = true;
+            readByte();
+            var fractionDigits:Int = 0;
+            var place:Float = 0.1;
+            while (isDigitChar(peekByte()))
+            {
+                value += (readByte() - 48) * place;
+                place *= 0.1;
+                fractionDigits++;
+            }
+            if (fractionDigits == 0) throw "Missing fraction digits in JSON number";
+        }
+
+        if (peekByte() == 101 || peekByte() == 69) // e/E
+        {
+            floating = true;
+            readByte();
+            var exponentNegative:Bool = false;
+            if (peekByte() == 43 || peekByte() == 45) // + or -
+            {
+                exponentNegative = peekByte() == 45;
+                readByte();
+            }
+            var exponentDigits:Int = 0;
+            var exponent:Float = 0.0;
+            while (isDigitChar(peekByte()))
+            {
+                // Cap the accumulated exponent to avoid numeric overflow while
+                // still consuming and validating the complete exponent token.
+                exponent = Math.min(10000.0, exponent * 10.0 + (readByte() - 48));
+                exponentDigits++;
+            }
+            if (exponentDigits == 0) throw "Missing exponent digits in JSON number";
+            if (exponentNegative) exponent = -exponent;
+            if (value != 0.0) value *= Math.pow(10.0, exponent);
+        }
+
+        if (negative) value = -value;
+
+        // Match the common Haxe JSON representation: small integral values are
+        // Ints, while decimal/exponent and out-of-range values remain Floats.
+        if (!floating && value >= -2147483648.0 && value <= 2147483647.0)
+            return Std.int(value);
+        return value;
     }
 
     function parseNumberToken(value:String):Dynamic

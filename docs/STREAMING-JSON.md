@@ -1,6 +1,6 @@
 # Streaming JSON API
 
-`hjson.StreamingJSON` is an additional strict-JSON API designed for large `.json` files. Existing `HJSON.parse()` and `HJSON.parseFile()` keep their existing HJSON syntax and behavior.
+`hjson.StreamingJSON` is an additional strict-JSON API designed for large `.json` files. Existing `HJSON.parse()` and `HJSON.parseFile()` keep their existing HJSON syntax and behavior. The reader uses a 4 MiB buffer by default and parses common numeric tokens without allocating a temporary string per number, which targets the hot path in dense FNF charts.
 
 ## Parse a file without a full source string
 

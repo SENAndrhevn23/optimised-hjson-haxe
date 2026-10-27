@@ -1,5 +1,6 @@
 {
   "engine": "H-Slice+ADR",
+  "numericCases": [0, -1, 2147483647, 2147483648, -2147483648, 12.5, -0.125, 1e2, 5.5e-2, 0e99],
   "song": {
     "name": "Tiny test",
     "notes": [
